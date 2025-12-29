@@ -31,19 +31,22 @@ graph TD
         G[events.html]
         H[create-event.html]
         I[login.js]
-        J[styles.css]
-        K[assets/]
+        J[event-card.js]
+        K[registration.js]
+        L[styles.css]
+        M[assets/]
     end
 
     subgraph docs
-        L[SCMP.md]
-        M[Change-Log.md]
-        N[CI-Register.md]
-        O[BL1-Record.md]
+        N[SCMP.md]
+        O[Change-Log.md]
+        P[CI-Register.md]
+        Q[BL1-Record.md]
+        R[BL2-Record.md]
     end
 
-    B --> D & E & F & G & H & I & J & K;
-    C --> L & M & N & O;
+    B --> D & E & F & G & H & I & J & K & L & M;
+    C --> N & O & P & Q & R;
 ```
 
 ## 3. Roles and Responsibilities
@@ -100,10 +103,11 @@ Git tags are used to mark important project milestones such as baselines and rel
 Version numbers are updated whenever changes significantly impact functionality, documentation, or system structure.
 
 ## 7. Branching Model
-A simple and effective branching model is adopted to support parallel development and controlled integration of changes. The following branches are used:
-main branch: Contains stable and approved versions of the project.
-feature-login branch: Used for implementing or modifying the login functionality.
-feature-event-registration branch: Used for developing the event registration feature.
+A simple and effective branching model is adopted to support parallel development and controlled integration of changes.
+
+- **main**: Contains stable and approved versions of the project.
+- **feature branches**: Used for implementing or modifying specific functionality using a consistent pattern such as `feature-<topic>` (e.g., `feature-login`).
+
 All development work is performed on feature branches. Once changes are completed and reviewed, they are merged into the main branch using pull requests. This approach ensures that the main branch always remains stable and well-controlled.
 
 ## 8. Change Control Process
@@ -118,10 +122,12 @@ This structured approach prevents unauthorized changes and ensures traceability 
 
 ## 9. Baseline Management
 Baselines represent approved and stable versions of the project. They serve as reference points against which future changes are measured.
+
 Two baselines are defined for this project:
-Baseline 1 (BL1): Includes initial repository setup, project documentation, and CI identification.
-Baseline 2 (BL2): Includes a working prototype with approved Change Requests implemented.
-Each baseline is tagged in Git and accompanied by a Baseline Record document describing its contents and purpose.
+- **Baseline 1 (BL1):** Includes initial repository setup, project documentation, and CI identification.
+- **Baseline 2 (BL2):** Includes a working prototype with approved Change Requests implemented.
+
+Each baseline is tagged in Git and accompanied by a Baseline Record document describing its contents and purpose (see `BL1-Record.md` and `BL2-Record.md`).
 
 ## 10. Release Management
 Release management ensures that stable and approved versions of the system are formally delivered. Two releases are planned for the project:
