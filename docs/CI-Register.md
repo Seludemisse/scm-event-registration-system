@@ -20,5 +20,8 @@ This document lists all Configuration Items (CIs) for the Mini Event Registratio
 | SRC-05     | create-event.html        | Source Code     | `src/`                  | Developer     | Active    |
 | SRC-06     | login.js                 | Source Code     | `src/`                  | Developer     | Active    |
 | SRC-07     | styles.css               | Source Code     | `src/`                  | Developer     | Active    |
+| SRC-08     | my-registered.html       | Source Code     | `src/`                  | Developer     | Active    |
+| SRC-09     | event-card.js            | Source Code     | `src/`                  | Developer     | Active    |
+| SRC-10     | registration.js          | Source Code     | `src/`                  | Developer     | Active    |
 | **Assets** |                          |                 |                         |               |           |
 | ASSET-01   | volunteer.webp           | Asset           | `src/assets/`           | Developer     | Active    |
