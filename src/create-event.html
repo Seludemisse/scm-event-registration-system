@@ -13,7 +13,7 @@
       <nav>
         <a href="dashboard.html">Dashboard</a>
         <span style="margin:0 8px;color:#c8cde0">|</span>
-        <a href="my-registered.html">My Registered Events</a>
+        <a id="navMyRegistered" href="my-registered.html">My Registered Events</a>
         <span style="margin:0 8px;color:#c8cde0">|</span>
         <a href="create-event.html">Create Event</a>
       </nav>
@@ -83,6 +83,19 @@
       const session = localStorage.getItem('ers_session');
       if(!session){ window.location='login.html'; return; }
       const s = JSON.parse(session);
+
+      function getRegistrations(){
+        try{return JSON.parse(localStorage.getItem('ers_registrations')||'{}')}catch(e){return{}}
+      }
+
+      // Update nav count for this user
+      const regs = getRegistrations();
+      const count = (regs[s.id] || []).length;
+      const navMyRegistered = document.getElementById('navMyRegistered');
+      if(navMyRegistered){
+        navMyRegistered.textContent = `My Registered Events (${count})`;
+      }
+
       function getEvents(){ try{return JSON.parse(localStorage.getItem('ers_events')||'[]')}catch(e){return[]}}
       function saveEvents(events){ localStorage.setItem('ers_events', JSON.stringify(events, null,2)); }
 

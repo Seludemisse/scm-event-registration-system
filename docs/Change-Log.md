@@ -9,3 +9,5 @@
 | CR-05 | 12/24/2025 | Dashboard registration flow and counters         | Implemented  |
 | CR-06 | 12/25/2025 | Create event page with image upload/resizing     | Implemented  |
 | CR-07 | 12/28/2025 | Event details modal with owner edit (image/description) | Implemented  |
+| CR-08 | 12/29/2025 | Enhance “My Registered Events” (list + unregister) and prevent duplicate/self registration | Implemented  |
+| CR-09 | 12/29/2025 | Add registered-events count beside “My Registered Events” in the nav | Implemented  |
