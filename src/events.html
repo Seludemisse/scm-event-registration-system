@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Events — Volunteer Event Registration</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="site-nav">
+    <div class="nav-left">
+      <div class="brand-small">Campus Events</div>
+      <nav>
+        <a href="dashboard.html">Dashboard</a>
+        <span style="margin:0 8px;color:#c8cde0">|</span>
+        <a href="my-registered.html">My Registered Events</a>
+        <span style="margin:0 8px;color:#c8cde0">|</span>
+        <a href="create-event.html">Create Event</a>
+      </nav>
+    </div>
+    <div>
+      <a id="navLogout" class="btn-ghost">Logout</a>
+    </div>
+  </header>
+
+  <main class="container">
+    <section style="margin:auto; width:100%; max-width:900px;">
+      <article class="card">
+        <h2>Events</h2>
+        <p class="small">Manage events you created or view public events.</p>
+        <div id="eventsContainer" style="margin-top:16px"></div>
+        <div style="margin-top:18px;display:flex;gap:8px">
+          <a href="create-event.html" class="btn-primary" style="display:inline-block;text-decoration:none;padding:10px 14px;border-radius:10px;color:white">Create event</a>
+          <a href="dashboard.html" style="align-self:center;color:var(--muted)">Back to dashboard</a>
+        </div>
+      </article>
+    </section>
+  </main>
+
+  <script>
+    (function(){
+      const session = localStorage.getItem('ers_session');
+      if(!session){ window.location='login.html'; return; }
+      const s = JSON.parse(session);
+      function getEvents(){
+        try{ return JSON.parse(localStorage.getItem('ers_events')||'[]'); }catch(e){return[]}
+      }
+      const events = getEvents().filter(e=>e.ownerId===s.id);
+      const container = document.getElementById('eventsContainer');
+
+      // uploader to edit images for existing events
+      const uploader = document.createElement('input'); uploader.type='file'; uploader.accept='image/*'; uploader.style.display='none'; document.body.appendChild(uploader);
+      let editTargetId = null;
+      function resizeImageFile(file, maxWidth, maxHeight){
+        return new Promise((resolve, reject)=>{
+          const fr = new FileReader(); fr.onload = ()=>{
+            const img = new Image(); img.onload = ()=>{
+              let w=img.width, h=img.height; const ratio = Math.min(1, maxWidth/w, maxHeight/h); w=Math.round(w*ratio); h=Math.round(h*ratio);
+              const cnv=document.createElement('canvas'); cnv.width=w; cnv.height=h; const ctx=cnv.getContext('2d'); ctx.drawImage(img,0,0,w,h);
+              try{ resolve(cnv.toDataURL('image/webp',0.8)); }catch(e){ resolve(cnv.toDataURL('image/jpeg',0.85)); }
+            }; img.onerror=reject; img.src=fr.result;
+          }; fr.onerror=reject; fr.readAsDataURL(file);
+        });
+      }
+
+      uploader.addEventListener('change', function(e){
+        const file = e.target.files && e.target.files[0]; if(!file) return; if(!file.type.startsWith('image/')){ alert('Choose an image file'); uploader.value=''; return; }
+        resizeImageFile(file, 1200, 800).then(dataUrl=>{
+          const all = getEvents();
+          const ev = all.find(x=>x.id===editTargetId);
+          if(!ev){ alert('Event not found'); uploader.value=''; return; }
+          ev.image = dataUrl; localStorage.setItem('ers_events', JSON.stringify(all, null,2));
+          // update local list and re-render
+          const local = events.find(x=>x.id===editTargetId); if(local) local.image = dataUrl;
+          uploader.value=''; editTargetId=null; renderList();
+          const prev = document.createElement('div'); prev.textContent='Image uploaded'; prev.style.position='fixed'; prev.style.right='16px'; prev.style.bottom='16px'; prev.style.padding='10px 14px'; prev.style.background='var(--purple-500)'; prev.style.color='white'; prev.style.borderRadius='8px'; document.body.appendChild(prev);
+          setTimeout(()=>{ prev.remove(); },1600);
+        }).catch(()=>{ alert('Could not process image'); uploader.value=''; });
+      });
+      if(events.length===0){
+        container.innerHTML = '<div style="padding:18px;border-radius:10px;background:#fbfbfd;border:1px solid #f0f0f4;color:#333">No events yet. Use Create event to add one.</div>';
+        return;
+      }
+      const list = document.createElement('div');
+      list.style.display='grid';
+      list.style.gridTemplateColumns='1fr 1fr';
+      list.style.gap='12px';
+      function renderList(){
+        list.innerHTML='';
+        events.forEach(ev=>{
+          const card=document.createElement('div');
+          card.style.padding='0';card.style.borderRadius='10px';card.style.background='#fff';card.style.boxShadow='0 6px 18px rgba(20,20,40,0.04)';card.style.overflow='hidden';
+          if(ev.image){
+            const img=document.createElement('img'); img.src=ev.image; img.style.width='100%'; img.style.height='120px'; img.style.objectFit='cover'; img.alt=''; card.appendChild(img);
+          } else {
+            const ph=document.createElement('div'); ph.style.height='120px'; ph.style.background='linear-gradient(135deg,#f5f7fb,#eef2f9)'; card.appendChild(ph);
+          }
+          const c=document.createElement('div'); c.style.padding='12px';
+          const titleEl=document.createElement('strong'); titleEl.textContent = ev.title; c.appendChild(titleEl);
+          const descEl=document.createElement('p'); descEl.className='description'; descEl.textContent = ev.description || ''; c.appendChild(descEl);
+          
+          // edit image action
+          const editAction = document.createElement('div'); editAction.style.marginTop='10px';
+          const editBtn = document.createElement('button'); editBtn.className='btn-ghost small'; editBtn.textContent='Edit image'; editBtn.addEventListener('click', ()=>{ editTargetId = ev.id; uploader.click(); });
+          editAction.appendChild(editBtn);
+          c.appendChild(editAction);
+
+          card.appendChild(c);
+          list.appendChild(card);
+        });
+      }
+      renderList();
+      container.appendChild(list);
+    })();
+  </script>
+</body>
+</html>

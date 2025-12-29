@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Create Event — Volunteer Event Registration</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="site-nav">
+    <div class="nav-left">
+      <div class="brand-small">Campus Events</div>
+      <nav>
+        <a href="dashboard.html">Dashboard</a>
+        <span style="margin:0 8px;color:#c8cde0">|</span>
+        <a href="my-registered.html">My Registered Events</a>
+        <span style="margin:0 8px;color:#c8cde0">|</span>
+        <a href="create-event.html">Create Event</a>
+      </nav>
+    </div>
+    <div>
+      <a id="navLogout" class="btn-ghost">Logout</a>
+    </div>
+  </header>
+
+  <main class="page-center">
+    <section class="center-wrap">
+      <article class="card create-card">
+        <div class="create-hero">
+          <h2>Create Event</h2>
+          <p class="small muted">Add an event to the campus calendar so others can discover and register.</p>
+        </div>
+
+        <form id="createEventForm" class="create-form" aria-label="Create event form">
+          <div>
+            <label for="evTitle">Title</label>
+            <input id="evTitle" required placeholder="e.g., Volunteer Drive - Library Lawn" />
+          </div>
+
+          <div>
+            <label for="evDate">Date</label>
+            <input id="evDate" type="date" />
+          </div>
+
+          <div>
+            <label for="evLocation">Location</label>
+            <input id="evLocation" placeholder="e.g., Main Hall" />
+          </div>
+
+          <div>
+            <label for="evDescription">Short description</label>
+            <textarea id="evDescription" placeholder="Write a catchy line to attract attendees (max 200 chars)" maxlength="200" rows="3"></textarea>
+            <div class="desc-meta" style="margin-top:8px;display:flex;justify-content:space-between;align-items:center">
+              <div class="desc-suggestions" aria-hidden="false">
+                <button type="button" class="desc-chip">Free entry • Food & Drinks</button>
+                <button type="button" class="desc-chip">Learn from industry experts</button>
+                <button type="button" class="desc-chip">Hands-on workshop — all levels</button>
+                <button type="button" class="desc-chip">Volunteering opportunity — make a difference</button>
+              </div>
+              <div class="char-count" style="color:var(--muted);font-size:13px">0/200</div>
+            </div>
+          </div>
+
+          <div>
+            <label for="evImage">Event image (optional)</label>
+            <input id="evImage" type="file" accept="image/*" />
+            <div class="img-preview-wrap" style="margin-top:8px">
+              <img id="evPreview" alt="Preview" style="display:none;width:100%;height:140px;object-fit:cover;border-radius:8px;border:1px solid #eef2f7" />
+            </div>
+          </div>
+
+          <div style="display:flex;gap:8px;margin-top:6px">
+            <button class="btn-primary" type="submit">Create</button>
+            <a href="events.html" style="align-self:center;color:var(--muted)">Back</a>
+          </div>
+        </form>
+      </article>
+    </section>
+  </main>
+
+  <script>
+    (function(){
+      const session = localStorage.getItem('ers_session');
+      if(!session){ window.location='login.html'; return; }
+      const s = JSON.parse(session);
+      function getEvents(){ try{return JSON.parse(localStorage.getItem('ers_events')||'[]')}catch(e){return[]}}
+      function saveEvents(events){ localStorage.setItem('ers_events', JSON.stringify(events, null,2)); }
+
+      // image processing: resize and return dataURL
+      function resizeImageFile(file, maxWidth, maxHeight){
+        return new Promise((resolve, reject)=>{
+          const fr = new FileReader();
+          fr.onload = () => {
+            const img = new Image();
+            img.onload = () => {
+              let w = img.width, h = img.height;
+              const ratio = Math.min(1, maxWidth / w, maxHeight / h);
+              w = Math.round(w * ratio); h = Math.round(h * ratio);
+              const cnv = document.createElement('canvas'); cnv.width = w; cnv.height = h;
+              const ctx = cnv.getContext('2d');
+              ctx.drawImage(img,0,0,w,h);
+              // try webp first
+              try{
+                const data = cnv.toDataURL('image/webp', 0.8);
+                resolve(data);
+              }catch(e){
+                resolve(cnv.toDataURL('image/jpeg', 0.85));
+              }
+            };
+            img.onerror = reject;
+            img.src = fr.result;
+          };
+          fr.onerror = reject;
+          fr.readAsDataURL(file);
+        });
+      }
+
+      const evImageInput = document.getElementById('evImage');
+      const evPreview = document.getElementById('evPreview');
+      const evDesc = document.getElementById('evDescription');
+      const charCount = document.querySelector('.char-count');
+      const chips = Array.from(document.querySelectorAll('.desc-chip'));
+      let selectedImageData = null;
+
+      // suggestion chips append text to description
+      chips.forEach(c => c.addEventListener('click', function(){
+        const cur = evDesc.value.trim();
+        const add = c.textContent;
+        evDesc.value = cur ? (cur + ' • ' + add) : add;
+        evDesc.dispatchEvent(new Event('input'));
+      }));
+
+      evDesc.addEventListener('input', function(){
+        charCount.textContent = evDesc.value.length + '/200';
+      });
+
+      evImageInput.addEventListener('change', function(e){
+        const file = e.target.files && e.target.files[0];
+        if(!file) { selectedImageData = null; evPreview.style.display='none'; evPreview.src=''; return; }
+        // basic file size/type check
+        if(!file.type.startsWith('image/')){ alert('Please choose an image file'); evImageInput.value=''; return; }
+        resizeImageFile(file, 1200, 800).then(dataUrl=>{
+          selectedImageData = dataUrl; evPreview.src = dataUrl; evPreview.style.display='block';
+        }).catch(()=>{ alert('Could not process image'); });
+      });
+
+      document.getElementById('createEventForm').addEventListener('submit', function(e){
+        e.preventDefault();
+        const title = document.getElementById('evTitle').value.trim();
+        const date = document.getElementById('evDate').value;
+        const location = document.getElementById('evLocation').value.trim();
+        const description = document.getElementById('evDescription').value.trim();
+        if(!title){ alert('Please enter a title'); return }
+        const events = getEvents();
+        const ev = { id: 'ev_'+Date.now(), title, date, location, description: description || null, ownerId: s.id, createdAt: new Date().toISOString(), image: selectedImageData || null };
+        events.push(ev); saveEvents(events);
+        window.location='events.html';
+      });
+
+      document.getElementById('navLogout').addEventListener('click', function(){
+        localStorage.removeItem('ers_session');
+        window.location='login.html';
+      });
+    })();
+  </script>
+</body>
+</html>
