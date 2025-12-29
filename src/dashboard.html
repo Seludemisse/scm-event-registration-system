@@ -13,7 +13,7 @@
       <nav>
         <a href="dashboard.html">Dashboard</a>
         <span style="margin:0 8px;color:#c8cde0">|</span>
-        <a href="my-registered.html">My Registered Events</a>
+        <a id="navMyRegistered" href="my-registered.html">My Registered Events</a>
         <span style="margin:0 8px;color:#c8cde0">|</span>
         <a href="create-event.html">Create Event</a>
       </nav>
@@ -42,11 +42,26 @@
   </main>
 
   <script src="event-card.js"></script>
+  <script src="registration.js"></script>
   <script>
     (function(){
       const session = localStorage.getItem('ers_session');
       if(!session){ window.location='login.html'; return; }
       const user = JSON.parse(session);
+
+      // registrations per user stored in localStorage under ers_registrations as {userId: [eventIds]}
+      function getRegistrations(){
+        try{return JSON.parse(localStorage.getItem('ers_registrations')||'{}')}catch(e){return{}}
+      }
+
+      const regs = getRegistrations();
+      const myRegs = new Set((regs[user.id]||[]));
+
+      // Update nav count for this user
+      const navMyRegistered = document.getElementById('navMyRegistered');
+      if(navMyRegistered){
+        navMyRegistered.textContent = `My Registered Events (${myRegs.size})`;
+      }
 
       // initialize sample events if nonPe
       function getEvents(){
@@ -88,15 +103,6 @@
         });
         if(updated){ saveEvents(events); }
       })();
-
-      // registrations per user stored in localStorage under ers_registrations as {userId: [eventIds]}
-      function getRegistrations(){
-        try{return JSON.parse(localStorage.getItem('ers_registrations')||'{}')}catch(e){return{}}
-      }
-      function saveRegistrations(r){ localStorage.setItem('ers_registrations', JSON.stringify(r, null,2)); }
-
-      const regs = getRegistrations();
-      const myRegs = new Set((regs[user.id]||[]));
 
       const grid = document.getElementById('eventsGrid');
       const countEl = document.getElementById('eventCount');
@@ -221,10 +227,20 @@
       })();
 
       function handleRegister(eventId, btn) {
-        alert('Registered successfully');
+        const result = registerForEvent(user.id, eventId);
+        if(!result.ok){
+          alert(result.reason || 'Could not register');
+          return;
+        }
+
+        // keep in-memory set in sync
         myRegs.add(eventId);
-        regs[user.id] = Array.from(myRegs);
-        saveRegistrations(regs);
+        // keep nav count in sync
+        if(navMyRegistered){
+          navMyRegistered.textContent = `My Registered Events (${myRegs.size})`;
+        }
+
+        alert('Registered successfully');
         btn.textContent = 'Registered';
         btn.disabled = true;
       }
