@@ -13,7 +13,7 @@
       <nav>
         <a href="dashboard.html">Dashboard</a>
         <span style="margin:0 8px;color:#c8cde0">|</span>
-        <a href="my-registered.html">My Registered Events</a>
+        <a id="navMyRegistered" href="my-registered.html">My Registered Events</a>
         <span style="margin:0 8px;color:#c8cde0">|</span>
         <a href="create-event.html">Create Event</a>
       </nav>
@@ -21,7 +21,7 @@
     <div>
       <a id="navLogout" class="btn-ghost">Logout</a>
     </div>
-  </header> 
+  </header>
 
   <main class="page">
     <div class="page-header">
@@ -29,15 +29,17 @@
         <h1>My Registered Events</h1>
         <div id="countLine" style="color:var(--muted);font-size:13px;margin-top:6px">0 events</div>
       </div>
+      <div></div>
     </div>
 
     <section>
-      <div id="myGrid" class="events-grid"></div>
+      <div id="list" class="events-grid"></div>
     </section>
 
     <div class="footer">© 2025 Campus Event Registration System</div>
   </main>
 
+  <script src="registration.js"></script>
   <script>
     (function(){
       const session = localStorage.getItem('ers_session');
@@ -89,13 +91,13 @@
           if(!ev) return;
 
           const card = document.createElement('div');
-          card.className='event-card';
+          card.className = 'event-card';
 
           if(ev.image){
             const img = document.createElement('img');
-            img.className='event-thumb';
+            img.className = 'event-thumb';
             img.src = ev.image;
-            img.alt='';
+            img.alt = '';
             card.appendChild(img);
           } else {
             const div = document.createElement('div');
@@ -122,14 +124,36 @@
           viewBtn.addEventListener('click', function(){ openDetailsModal(ev); });
           body.appendChild(viewBtn);
 
+          const meta = document.createElement('div');
+          meta.className = 'meta';
+          meta.textContent = [ev.date, ev.time, ev.location].filter(Boolean).join(' • ');
+
+          const actions = document.createElement('div');
+          actions.className = 'ev-actions';
+
+          const btn = document.createElement('button');
+          btn.className = 'btn-ghost';
+          btn.textContent = 'Unregister';
+          btn.addEventListener('click', function(){
+            unregisterFromEvent(user.id, ev.id);
+            render();
+          });
+
+          actions.appendChild(btn);
+          body.appendChild(title);
+          body.appendChild(meta);
+          body.appendChild(actions);
           card.appendChild(body);
-          grid.appendChild(card);
+
+          list.appendChild(card);
         });
       }
 
+      render();
+
       document.getElementById('navLogout').addEventListener('click', function(){
         localStorage.removeItem('ers_session');
-        window.location='login.html';
+        window.location = 'login.html';
       });
     })();
   </script>
