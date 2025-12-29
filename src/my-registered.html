@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>My Registered Events</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="site-nav">
+    <div class="nav-left">
+      <div class="brand-small">Campus Events</div>
+      <nav>
+        <a href="dashboard.html">Dashboard</a>
+        <span style="margin:0 8px;color:#c8cde0">|</span>
+        <a href="my-registered.html">My Registered Events</a>
+        <span style="margin:0 8px;color:#c8cde0">|</span>
+        <a href="create-event.html">Create Event</a>
+      </nav>
+    </div>
+    <div>
+      <a id="navLogout" class="btn-ghost">Logout</a>
+    </div>
+  </header> 
+
+  <main class="page">
+    <div class="page-header">
+      <div>
+        <h1>My Registered Events</h1>
+        <div style="color:var(--muted);font-size:13px;margin-top:6px">Events you have registered for.</div>
+      </div>
+    </div>
+
+    <section>
+      <div id="myGrid" class="events-grid"></div>
+    </section>
+
+    <div class="footer">© 2025 Campus Event Registration System</div>
+  </main>
+
+  <script>
+    (function(){
+      const session = localStorage.getItem('ers_session');
+      if(!session){ window.location='login.html'; return; }
+      const user = JSON.parse(session);
+
+      function getEvents(){ try{ return JSON.parse(localStorage.getItem('ers_events')||'[]'); }catch(e){return[]} }
+      function getRegistrations(){ try{return JSON.parse(localStorage.getItem('ers_registrations')||'{}')}catch(e){return{}} }
+
+      const events = getEvents();
+      const regs = getRegistrations();
+      const myList = regs[user.id] || [];
+
+      const grid = document.getElementById('myGrid');
+
+      // simple details modal (shows description only)
+      (function(){
+        const backdrop = document.createElement('div'); backdrop.className='modal-backdrop'; backdrop.style.display='none';
+        backdrop.innerHTML = '<div class="details-modal" role="dialog" aria-modal="true" aria-label="Event details">\
+          <button class="modal-close" aria-label="Close">×</button>\
+          <div class="modal-body">\
+            <div class="modal-content">\
+              <h3 class="modal-title"></h3>\
+              <p class="modal-desc"></p>\
+            </div>\
+          </div>\
+        </div>';
+        document.body.appendChild(backdrop);
+        function closeModal(){ backdrop.style.display='none'; window._modalOpenId = null; }
+        backdrop.querySelector('.modal-close').addEventListener('click', closeModal);
+        backdrop.addEventListener('click', function(e){ if(e.target===backdrop) closeModal(); });
+        window.openDetailsModal = function(ev){
+          window._modalOpenId = ev.id;
+          backdrop.style.display='flex';
+          backdrop.querySelector('.modal-title').textContent = ev.title || '';
+          backdrop.querySelector('.modal-desc').textContent = ev.description || 'No description provided.';
+        };
+      })();
+
+      if(myList.length===0){
+        grid.innerHTML = '<div class="card center"><p class="small">You have not registered for any events yet.</p><div style="margin-top:10px"><a href="dashboard.html" class="btn-primary">Browse Events</a></div></div>';
+      } else {
+        myList.forEach(id => {
+          const ev = events.find(e=>e.id===id);
+          if(!ev) return;
+          const card = document.createElement('div');
+          card.className='event-card';
+
+          if(ev.image){
+            const img = document.createElement('img');
+            img.className='event-thumb';
+            img.src = ev.image;
+            img.alt='';
+            card.appendChild(img);
+          } else {
+            const div = document.createElement('div'); div.className='event-thumb no-image'; card.appendChild(div);
+          }
+
+          const body = document.createElement('div'); body.className='card-body';
+          const titleEl = document.createElement('strong'); titleEl.textContent = ev.title; body.appendChild(titleEl);
+          // show only date and location (no time, no description on card)
+          const meta = document.createElement('div'); meta.className='meta'; meta.textContent = (ev.date||'')+' • '+(ev.location||''); body.appendChild(meta);
+
+          const viewBtn = document.createElement('button'); viewBtn.className='btn-ghost small'; viewBtn.textContent='View details'; viewBtn.style.marginTop='8px'; viewBtn.addEventListener('click', function(){ openDetailsModal(ev); });
+          body.appendChild(viewBtn);
+
+          card.appendChild(body);
+          grid.appendChild(card);
+        });
+      }
+
+      document.getElementById('navLogout').addEventListener('click', function(){
+        localStorage.removeItem('ers_session');
+        window.location='login.html';
+      });
+    })();
+  </script>
+</body>
+</html>

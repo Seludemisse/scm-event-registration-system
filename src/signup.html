@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Volunteer Event Registration — Create account</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <!-- Serif display font for signup hero -->
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="container">
+    <section class="left" aria-hidden="true">
+      <div class="left-inner">
+        <div class="left-text">
+          <div class="brand">Event Registration</div>
+          
+          <p class="hero-sub" style="margin-top:8px;max-width:380px">Create an account to discover and register for campus activities — volunteering, talks, sports and more.</p>
+        </div>
+        <div class="left-visual" aria-hidden="true">
+          <div class="visual-frame" style="--image-position:50% 40%">
+            <img class="illustration" src="assets/volunteer.webp" alt="" width="900" height="540" loading="lazy" decoding="async" />
+            <div class="visual-overlay" aria-hidden="true"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card-wrap">
+      <article class="card" role="region" aria-labelledby="create-account">
+        <h2 id="create-account">Create account</h2>
+
+        <form id="signupForm" novalidate>
+          <div class="row">
+            <div style="flex:1">
+              <label for="firstName">First Name</label>
+              <input id="firstName" name="firstName" type="text" placeholder="First Name" required />
+            </div>
+            <div style="flex:1">
+              <label for="lastName">Last Name</label>
+              <input id="lastName" name="lastName" type="text" placeholder="Last Name" required />
+            </div>
+          </div>
+
+          <div>
+            <label for="email">Email ID</label>
+            <input id="email" name="email" type="email" placeholder="you@example.com" required />
+          </div>
+
+          <div>
+            <label for="password">Password</label>
+            <input id="password" name="password" type="password" placeholder="Create a password" minlength="8" required />
+          </div>
+
+          <div class="actions">
+            <button type="submit" class="btn-primary">Create account</button>
+            <div class="cta-row">
+              <div style="font-size:14px;color:var(--muted)">Already having an account? <a href="login.html" class="link">Login</a></div>
+            </div>
+          </div>
+        </form>
+      </article>
+    </section>
+  </main>
+
+  <script src="login.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Login — Volunteer Event Registration</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="container">
+    <section class="left" aria-hidden="true">
+      <div class="left-inner">
+        <div class="left-text">
+          <h1 class="hero-title">Welcome back</h1>
+          <p class="hero-sub">Sign in to manage events and view your registrations.</p>
+        </div>
+        <div class="left-visual" aria-hidden="true">
+          <div class="visual-frame" style="--image-position:50% 40%">
+            <img class="illustration" src="assets/volunteer.webp" alt="" width="900" height="540" loading="lazy" decoding="async">
+            <div class="visual-overlay" aria-hidden="true"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card-wrap">
+      <article class="card" role="region" aria-labelledby="sign-in">
+        <h2 id="sign-in">Sign in</h2>
+        <form id="loginForm" novalidate>
+          <div>
+            <label for="loginEmail">Email ID</label>
+            <input id="loginEmail" name="email" type="email" placeholder="you@example.com" required />
+          </div>
+          <div>
+            <label for="loginPassword">Password</label>
+            <input id="loginPassword" name="password" type="password" placeholder="Your password" required />
+          </div>
+          <div class="actions">
+            <button type="submit" class="btn-primary">Sign in</button>
+            <div class="cta-row">
+              <div style="font-size:14px;color:var(--muted)">New here? <a href="signup.html" class="link">Create account</a></div>
+            </div>
+          </div>
+        </form>
+      </article>
+    </section>
+  </main>
+  <script src="login.js" defer></script>
+</body>
+</html>

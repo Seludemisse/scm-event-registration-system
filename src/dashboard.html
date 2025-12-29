@@ -1,0 +1,297 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Dashboard — Campus Event Registration</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="site-nav">
+    <div class="nav-left">
+      <div class="brand-small">Campus Events</div>
+      <nav>
+        <a href="dashboard.html">Dashboard</a>
+        <span style="margin:0 8px;color:#c8cde0">|</span>
+        <a href="my-registered.html">My Registered Events</a>
+        <span style="margin:0 8px;color:#c8cde0">|</span>
+        <a href="create-event.html">Create Event</a>
+      </nav>
+    </div>
+    <div>
+      <a id="navLogout" class="btn-ghost">Logout</a>
+    </div>
+  </header>
+
+  <main class="page">
+    <div class="page-header">
+      <div>
+        <h1>Upcoming Campus Events</h1>
+        <div id="eventCount" style="color:var(--muted);font-size:13px;margin-top:6px">0 upcoming events</div>
+      </div>
+      <div class="search-fake">
+        <input placeholder="Search events " aria-label="Search" />
+      </div>
+    </div>
+
+    <section>
+      <div id="eventsGrid" class="events-grid"></div>
+    </section>
+
+    <div class="footer">© 2025 Campus Event Registration System</div>
+  </main>
+
+  <script src="event-card.js"></script>
+  <script>
+    (function(){
+      const session = localStorage.getItem('ers_session');
+      if(!session){ window.location='login.html'; return; }
+      const user = JSON.parse(session);
+
+      // initialize sample events if nonPe
+      function getEvents(){
+        try{ return JSON.parse(localStorage.getItem('ers_events')||'[]'); }catch(e){return[]}
+      }
+      function saveEvents(events){ localStorage.setItem('ers_events', JSON.stringify(events, null,2)); }
+      let events = getEvents();
+      if(!events || events.length===0){
+        events = [
+          {id:'ev1', title:'Campus Freshers Fair', date:'2026-01-15', time:'10:00', location:'Main Hall'},
+          {id:'ev2', title:'Volunteer Drive', date:'2026-01-20', time:'09:00', location:'Library Lawn'},
+          {id:'ev3', title:'Tech Talk: AI', date:'2026-02-05', time:'14:00', location:'Auditorium'},
+          {id:'ev4', title:'Art & Craft Workshop', date:'2026-02-10', time:'11:00', location:'Studio 3'},
+          {id:'ev5', title:'Sports Meetup', date:'2026-02-18', time:'16:00', location:'Sports Ground'}
+        ];
+        saveEvents(events);
+      }
+
+      // Ensure specific events are editable and have a friendly description for this user (only targets a few titles)
+      (function patchEventsForUser(){
+        const patches = [
+          {match: 'personal development', desc: 'Boost your soft skills and career growth with hands-on sessions.'},
+          {match: 'dive in to web 3', desc: 'Explore Web3 fundamentals and build your first dApp — no prior experience needed.'},
+          {match: 'video edit', desc: 'Learn practical editing workflows to create standout videos for social platforms.'},
+          {match: 'introduction to web development', desc: 'Start building your first websites — friendly for beginners.'}
+        ];
+        let updated = false;
+        events.forEach(ev => {
+          const t = (ev.title || '').toLowerCase();
+          patches.forEach(p => {
+            if(t.includes(p.match)){
+              // do not change owner; only add default description if current user owns the event
+              if(ev.ownerId === user.id && !ev.description){
+                ev.description = p.desc;
+                updated = true;
+              }
+            }
+          });
+        });
+        if(updated){ saveEvents(events); }
+      })();
+
+      // registrations per user stored in localStorage under ers_registrations as {userId: [eventIds]}
+      function getRegistrations(){
+        try{return JSON.parse(localStorage.getItem('ers_registrations')||'{}')}catch(e){return{}}
+      }
+      function saveRegistrations(r){ localStorage.setItem('ers_registrations', JSON.stringify(r, null,2)); }
+
+      const regs = getRegistrations();
+      const myRegs = new Set((regs[user.id]||[]));
+
+      const grid = document.getElementById('eventsGrid');
+      const countEl = document.getElementById('eventCount');
+      const searchInput = document.querySelector('.search-fake input');
+
+      // image uploader for editing existing events
+      const uploader = document.createElement('input');
+      uploader.type = 'file'; uploader.accept = 'image/*'; uploader.style.display = 'none'; document.body.appendChild(uploader);
+      let editTargetId = null;
+
+      function resizeImageFile(file, maxWidth, maxHeight){
+        return new Promise((resolve, reject)=>{
+          const fr = new FileReader();
+          fr.onload = () => {
+            const img = new Image();
+            img.onload = () => {
+              let w = img.width, h = img.height;
+              const ratio = Math.min(1, maxWidth / w, maxHeight / h);
+              w = Math.round(w * ratio); h = Math.round(h * ratio);
+              const cnv = document.createElement('canvas'); cnv.width = w; cnv.height = h;
+              const ctx = cnv.getContext('2d');
+              ctx.drawImage(img,0,0,w,h);
+              try{ resolve(cnv.toDataURL('image/webp', 0.8)); }catch(e){ resolve(cnv.toDataURL('image/jpeg', 0.85)); }
+            };
+            img.onerror = reject;
+            img.src = fr.result;
+          };
+          fr.onerror = reject;
+          fr.readAsDataURL(file);
+        });
+      }
+
+      uploader.addEventListener('change', function(e){
+        const file = e.target.files && e.target.files[0];
+        if(!file) return; if(!file.type.startsWith('image/')){ alert('Choose an image file'); uploader.value=''; return; }
+        resizeImageFile(file, 1200, 800).then(dataUrl=>{
+          const ev = events.find(x=>x.id===editTargetId);
+          if(!ev) { alert('Event not found'); uploader.value=''; return; }
+          ev.image = dataUrl; saveEvents(events); uploader.value=''; editTargetId=null; render();
+          // update modal image if open
+          if(window._modalOpenId && window._modalOpenId === ev.id){
+            const img = document.querySelector('.details-modal img.modal-image'); if(img) img.src = ev.image || '';
+          }
+          // small confirmation
+          const prev = document.createElement('div'); prev.textContent='Image uploaded'; prev.style.position='fixed'; prev.style.right='16px'; prev.style.bottom='16px'; prev.style.padding='10px 14px'; prev.style.background='var(--purple-500)'; prev.style.color='white'; prev.style.borderRadius='8px'; document.body.appendChild(prev);
+          setTimeout(()=>{ prev.remove(); }, 1600);
+        }).catch(()=>{ alert('Could not process image'); uploader.value=''; });
+      });
+
+      // details modal (view full description and edit if owner)
+      (function(){
+        const backdrop = document.createElement('div'); backdrop.className='modal-backdrop'; backdrop.style.display='none';
+        backdrop.innerHTML = `<div class="details-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+          <button class="modal-close" aria-label="Close">×</button>
+          <img class="modal-image" src="" alt="" style="width:320px;height:100%;object-fit:cover;">
+          <div class="modal-content">
+            <h3 id="modal-title" class="modal-title"></h3>
+            <div class="modal-meta"></div>
+            <p class="modal-desc"></p>
+            <div class="modal-actions" style="margin-top:16px;display:flex;gap:8px;"></div>
+          </div>
+        </div>`;
+        document.body.appendChild(backdrop);
+        function closeModal(){ backdrop.style.display='none'; window._modalOpenId = null; }
+        backdrop.querySelector('.modal-close').addEventListener('click', closeModal);
+        backdrop.addEventListener('click', function(e){ if(e.target===backdrop) closeModal(); });
+
+        window.openDetailsModal = function(ev, editable){
+          window._modalOpenId = ev.id;
+          backdrop.style.display='flex';
+          const img = backdrop.querySelector('.modal-image');
+          img.src = ev.image || '';
+          img.style.display = ev.image ? 'block' : 'none';
+          backdrop.querySelector('.modal-title').textContent = ev.title || '';
+          const computedEditable = !!editable;
+          const descEl = backdrop.querySelector('.modal-desc');
+          descEl.textContent = ev.description || 'No description provided.';
+          backdrop.querySelector('.modal-meta').textContent = (ev.date||'') + ' • ' + (ev.time||'') + ' • ' + (ev.location||'');
+          const actions = backdrop.querySelector('.modal-actions'); actions.innerHTML = '';
+
+          // modal shows only details by default; editing is owner-only
+
+          if(computedEditable){
+            const editBtn = document.createElement('button'); editBtn.className='btn-ghost'; editBtn.textContent='Edit description';
+            editBtn.addEventListener('click', function(){
+              // replace desc with textarea
+              const desc = backdrop.querySelector('.modal-desc');
+              const ta = document.createElement('textarea'); ta.style.width='100%'; ta.style.minHeight='120px'; ta.value = ev.description || '';
+              desc.replaceWith(ta);
+              ta.focus();
+              const save = document.createElement('button'); save.className='btn-primary'; save.textContent='Save';
+              const cancel = document.createElement('button'); cancel.className='btn-ghost'; cancel.textContent='Cancel';
+              actions.innerHTML = '';
+              actions.appendChild(save); actions.appendChild(cancel);
+              
+              const restoreView = () => {
+                const p = document.createElement('p'); p.className='modal-desc'; p.textContent = ev.description || 'No description provided.';
+                ta.replaceWith(p);
+                actions.innerHTML = '';
+                actions.appendChild(editBtn);
+                actions.appendChild(imgEdit);
+              };
+
+              save.addEventListener('click', function(){
+                const newDesc = ta.value.trim();
+                ev.description = newDesc || null; saveEvents(events); // persist
+                render(); // re-render dashboard cards
+                restoreView();
+                descEl.textContent = newDesc || 'No description provided.';
+              });
+              cancel.addEventListener('click', restoreView);
+            });
+            
+
+            // edit image from modal
+            const imgEdit = document.createElement('button'); imgEdit.className='btn-ghost'; imgEdit.textContent='Edit image';
+            imgEdit.addEventListener('click', function(){ editTargetId = ev.id; uploader.click(); });
+            actions.appendChild(editBtn);
+            actions.appendChild(imgEdit);
+          }
+        };
+      })();
+
+      function handleRegister(eventId, btn) {
+        alert('Registered successfully');
+        myRegs.add(eventId);
+        regs[user.id] = Array.from(myRegs);
+        saveRegistrations(regs);
+        btn.textContent = 'Registered';
+        btn.disabled = true;
+      }
+
+      function handleEditImage(eventId) {
+        editTargetId = eventId;
+        uploader.click();
+      }
+
+      function render(list){
+        const listToRender = Array.isArray(list) ? list : events;
+        grid.innerHTML='';
+
+        if(listToRender.length === 0){
+          const empty = document.createElement('div');
+          empty.style.color = 'var(--muted)';
+          empty.style.gridColumn = '1 / -1';
+          empty.textContent = 'No events found';
+          grid.appendChild(empty);
+        } else {
+          listToRender.forEach(ev => {
+            const card = renderEventCard(ev, user, myRegs, handleRegister, window.openDetailsModal, handleEditImage);
+            // Remove date/location from card's meta info
+            const meta = card.querySelector('.meta');
+            if(meta) meta.textContent = '';
+            grid.appendChild(card);
+          });
+        }
+
+        // update count
+        if(listToRender.length === events.length){
+          countEl.textContent = events.length + ' upcoming events';
+        } else {
+          countEl.textContent = listToRender.length + ' of ' + events.length + ' matching events';
+        }
+      }
+
+      function filterAndRender(q){
+        q = (q||'').trim().toLowerCase();
+        if(!q){ render(events); return; }
+        const filtered = events.filter(ev => {
+          return (ev.title + ' ' + (ev.location||'') + ' ' + (ev.date||'') + ' ' + (ev.time||'')).toLowerCase().includes(q);
+        });
+        render(filtered);
+      }
+
+      let debounceTimer;
+      searchInput.addEventListener('input', function(e){
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => filterAndRender(e.target.value), 150);
+      });
+
+      // allow clearing with escape
+      searchInput.addEventListener('keydown', function(e){
+        if(e.key === 'Escape'){
+          e.target.value = '';
+          filterAndRender('');
+        }
+      });
+
+      render();
+
+      document.getElementById('navLogout').addEventListener('click', function(){
+        localStorage.removeItem('ers_session');
+        window.location='login.html';
+      });
+    })();
+  </script>
+</body>
+</html>
