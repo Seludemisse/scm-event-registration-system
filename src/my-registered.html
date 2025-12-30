@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>My Registered Events</title>
+  <title>My Registered Events — Campus Event Registration</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -27,7 +27,7 @@
     <div class="page-header">
       <div>
         <h1>My Registered Events</h1>
-        <div style="color:var(--muted);font-size:13px;margin-top:6px">Events you have registered for.</div>
+        <div id="countLine" style="color:var(--muted);font-size:13px;margin-top:6px">0 events</div>
       </div>
     </div>
 
@@ -52,23 +52,27 @@
       const myList = regs[user.id] || [];
 
       const grid = document.getElementById('myGrid');
+      const countLine = document.getElementById('countLine');
+      countLine.textContent = `${myList.length} event${myList.length === 1 ? '' : 's'}`;
 
       // simple details modal (shows description only)
       (function(){
-        const backdrop = document.createElement('div'); backdrop.className='modal-backdrop'; backdrop.style.display='none';
+        const backdrop = document.createElement('div');
+        backdrop.className='modal-backdrop';
+        backdrop.style.display='none';
         backdrop.innerHTML = '<div class="details-modal" role="dialog" aria-modal="true" aria-label="Event details">\
           <button class="modal-close" aria-label="Close">×</button>\
-          <div class="modal-body">\
-            <div class="modal-content">\
-              <h3 class="modal-title"></h3>\
-              <p class="modal-desc"></p>\
-            </div>\
+          <div class="modal-content">\
+            <h3 class="modal-title"></h3>\
+            <p class="modal-desc"></p>\
           </div>\
         </div>';
         document.body.appendChild(backdrop);
+
         function closeModal(){ backdrop.style.display='none'; window._modalOpenId = null; }
         backdrop.querySelector('.modal-close').addEventListener('click', closeModal);
         backdrop.addEventListener('click', function(e){ if(e.target===backdrop) closeModal(); });
+
         window.openDetailsModal = function(ev){
           window._modalOpenId = ev.id;
           backdrop.style.display='flex';
@@ -83,6 +87,7 @@
         myList.forEach(id => {
           const ev = events.find(e=>e.id===id);
           if(!ev) return;
+
           const card = document.createElement('div');
           card.className='event-card';
 
@@ -93,15 +98,28 @@
             img.alt='';
             card.appendChild(img);
           } else {
-            const div = document.createElement('div'); div.className='event-thumb no-image'; card.appendChild(div);
+            const div = document.createElement('div');
+            div.className='event-thumb no-image';
+            card.appendChild(div);
           }
 
-          const body = document.createElement('div'); body.className='card-body';
-          const titleEl = document.createElement('strong'); titleEl.textContent = ev.title; body.appendChild(titleEl);
-          // show only date and location (no time, no description on card)
-          const meta = document.createElement('div'); meta.className='meta'; meta.textContent = (ev.date||'')+' • '+(ev.location||''); body.appendChild(meta);
+          const body = document.createElement('div');
+          body.className='card-body';
 
-          const viewBtn = document.createElement('button'); viewBtn.className='btn-ghost small'; viewBtn.textContent='View details'; viewBtn.style.marginTop='8px'; viewBtn.addEventListener('click', function(){ openDetailsModal(ev); });
+          const titleEl = document.createElement('strong');
+          titleEl.textContent = ev.title;
+          body.appendChild(titleEl);
+
+          const meta = document.createElement('div');
+          meta.className='meta';
+          meta.textContent = (ev.date||'')+' • '+(ev.location||'');
+          body.appendChild(meta);
+
+          const viewBtn = document.createElement('button');
+          viewBtn.className='btn-ghost small';
+          viewBtn.textContent='View details';
+          viewBtn.style.marginTop='8px';
+          viewBtn.addEventListener('click', function(){ openDetailsModal(ev); });
           body.appendChild(viewBtn);
 
           card.appendChild(body);
