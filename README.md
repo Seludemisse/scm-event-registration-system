@@ -1,1 +1,0 @@
-# scm-event-registration-system
