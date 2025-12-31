@@ -1,1 +1,1 @@
-Software configuration management  --> event registration system
+Software configuration management  --> Event registration System
